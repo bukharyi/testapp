@@ -15,11 +15,9 @@ module StressFaceRenderer {
         var cx = w / 2;
         var colour = StressLogic.backgroundColor(stress);
         var bg = lowPower ? Graphics.COLOR_BLACK : colour;
-        var fg = Graphics.COLOR_WHITE;
-        if (lowPower) {
-            fg = StressLogic.isValid(stress) ? colour : Graphics.COLOR_LT_GRAY;
-        } else if (!StressLogic.isValid(stress)) {
-            fg = Graphics.COLOR_LT_GRAY;
+        var fg = StressLogic.textColor(stress);
+        if (lowPower && StressLogic.isValid(stress)) {
+            fg = colour;
         }
 
         dc.setColor(bg, bg);

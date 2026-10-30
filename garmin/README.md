@@ -1,14 +1,26 @@
 # Stress Face for Garmin Forerunner
 
-A digital watch face that shows your current Garmin stress level and colours the whole screen:
+A digital watch face that shows your current Garmin stress level and colours the whole screen
+with the same accent colours as Garmin's stress widget:
 
-| Stress | Screen | Alert (Stress Alert app) |
+| Stress | Screen | Garmin category |
 |---|---|---|
-| 0-59 | **Blue** (Garmin's "rest" colour), `CALM` | none |
-| 60-74 | **Red**, `STRESSED` | 1 beep + 1 vibration |
-| 75-89 | **Red**, `STRESSED` | 2 beeps + 2 vibrations |
-| 90-100 | **Red**, `STRESSED` | 3 beeps + 3 vibrations |
+| 0-25 | **Blue** | Rest |
+| 26-50 | **Amber** (black text) | Low |
+| 51-75 | **Orange** | Medium |
+| 76-100 | **Dark red-orange** | High |
 | no reading (off wrist, running, etc.) | Black, `NO DATA` | none |
+
+The Stress Alert app also beeps and vibrates at the same time:
+
+| Stress | Alert |
+|---|---|
+| 60-74 | 1 beep + 1 vibration |
+| 75-89 | 2 beeps + 2 vibrations |
+| 90-100 | 3 beeps + 3 vibrations |
+
+The colours are snapped to the 64-colour palette of the Forerunner 945's screen, so they are
+close to the widget's shades but not exact on AMOLED watches.
 
 Alerts fire once each time stress climbs into a higher band, not every minute. A band can alert
 again only after stress has dropped at least 5 points below it, so a reading that wobbles around

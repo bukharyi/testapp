@@ -4,14 +4,23 @@ import Toybox.Test;
 // Unit tests. Run with: monkeyc ... --unit-test, then `monkeydo <prg> <device> /t` (see README).
 
 (:test)
-function testCalmAndStressedColours(logger as Test.Logger) as Boolean {
-    Test.assertEqual(StressLogic.backgroundColor(0), StressLogic.COLOR_CALM);
-    Test.assertEqual(StressLogic.backgroundColor(59), StressLogic.COLOR_CALM);
-    Test.assertEqual(StressLogic.backgroundColor(60), StressLogic.COLOR_STRESSED);
-    Test.assertEqual(StressLogic.backgroundColor(100), StressLogic.COLOR_STRESSED);
+function testGarminStressColours(logger as Test.Logger) as Boolean {
+    Test.assertEqual(StressLogic.backgroundColor(0), StressLogic.COLOR_REST);
+    Test.assertEqual(StressLogic.backgroundColor(25), StressLogic.COLOR_REST);
+    Test.assertEqual(StressLogic.backgroundColor(26), StressLogic.COLOR_LOW);
+    Test.assertEqual(StressLogic.backgroundColor(50), StressLogic.COLOR_LOW);
+    Test.assertEqual(StressLogic.backgroundColor(51), StressLogic.COLOR_MEDIUM);
+    Test.assertEqual(StressLogic.backgroundColor(75), StressLogic.COLOR_MEDIUM);
+    Test.assertEqual(StressLogic.backgroundColor(76), StressLogic.COLOR_HIGH);
+    Test.assertEqual(StressLogic.backgroundColor(100), StressLogic.COLOR_HIGH);
     Test.assertEqual(StressLogic.backgroundColor(null), StressLogic.COLOR_UNKNOWN);
     Test.assertEqual(StressLogic.backgroundColor(-1), StressLogic.COLOR_UNKNOWN);
     Test.assertEqual(StressLogic.backgroundColor(101), StressLogic.COLOR_UNKNOWN);
+    Test.assertEqual(StressLogic.statusText(25), "REST");
+    Test.assertEqual(StressLogic.statusText(26), "LOW");
+    Test.assertEqual(StressLogic.statusText(51), "MEDIUM");
+    Test.assertEqual(StressLogic.statusText(76), "HIGH");
+    Test.assertEqual(StressLogic.statusText(null), "NO DATA");
     return true;
 }
 

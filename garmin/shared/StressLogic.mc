@@ -5,7 +5,7 @@ import Toybox.SensorHistory;
 // Shared by the watch face and the alert app, so both make the same decisions.
 module StressLogic {
 
-    // Stress at or above this value counts as "stressed" (red).
+    // Stress at or above this value starts the beep / vibration alerts.
     const STRESS_THRESHOLD = 60;
     // 60-74 -> 1 beep, 75-89 -> 2 beeps, 90-100 -> 3 beeps.
     const LEVEL2_THRESHOLD = 75;
@@ -14,10 +14,17 @@ module StressLogic {
     // so a reading that wobbles between 59 and 60 does not beep every few minutes.
     const HYSTERESIS = 5;
 
-    // Palette-safe colours, so they look the same on 64-colour MIP and AMOLED screens.
-    // Blue is Garmin's "rest" colour; red is used for stress, as requested.
-    const COLOR_CALM = 0x00AAFF;
-    const COLOR_STRESSED = 0xFF0000;
+    // Garmin's stress widget categories: Rest 0-25, Low 26-50, Medium 51-75, High 76-100.
+    const REST_MAX = 25;
+    const LOW_MAX = 50;
+    const MEDIUM_MAX = 75;
+
+    // The widget's accent colours, snapped to the 64-colour MIP palette so they look the same
+    // on the 945 and on AMOLED screens.
+    const COLOR_REST = 0x00AAFF;
+    const COLOR_LOW = 0xFFAA00;
+    const COLOR_MEDIUM = 0xFF5500;
+    const COLOR_HIGH = 0xAA0000;
     const COLOR_UNKNOWN = 0x000000;
 
     function isValid(stress as Number?) as Boolean {
@@ -47,14 +54,42 @@ module StressLogic {
         if (!isValid(stress)) {
             return COLOR_UNKNOWN;
         }
-        return isStressed(stress) ? COLOR_STRESSED : COLOR_CALM;
+        var s = stress as Number;
+        if (s <= REST_MAX) {
+            return COLOR_REST;
+        }
+        if (s <= LOW_MAX) {
+            return COLOR_LOW;
+        }
+        if (s <= MEDIUM_MAX) {
+            return COLOR_MEDIUM;
+        }
+        return COLOR_HIGH;
+    }
+
+    // White text is hard to read on amber, so that band uses black.
+    function textColor(stress as Number?) as Number {
+        if (!isValid(stress)) {
+            return 0xAAAAAA;
+        }
+        return backgroundColor(stress) == COLOR_LOW ? 0x000000 : 0xFFFFFF;
     }
 
     function statusText(stress as Number?) as String {
         if (!isValid(stress)) {
             return "NO DATA";
         }
-        return isStressed(stress) ? "STRESSED" : "CALM";
+        var s = stress as Number;
+        if (s <= REST_MAX) {
+            return "REST";
+        }
+        if (s <= LOW_MAX) {
+            return "LOW";
+        }
+        if (s <= MEDIUM_MAX) {
+            return "MEDIUM";
+        }
+        return "HIGH";
     }
 
     // Latest stress value 0-100, or null when the watch has none (e.g. off wrist or moving).

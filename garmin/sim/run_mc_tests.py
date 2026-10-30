@@ -18,6 +18,7 @@ def to_python(expr):
     expr = re.sub(r"StressLogic\.(COLOR_\w+)", r"logic.C['\1']", expr)
     expr = expr.replace("StressLogic.backgroundColor", "logic.background_color")
     expr = expr.replace("StressLogic.alertLevel", "logic.alert_level")
+    expr = expr.replace("StressLogic.statusText", "logic.status_text")
     expr = expr.replace("t.currentLevel()", "t.armed")
     return expr
 
@@ -29,7 +30,7 @@ def main():
     for name, body in tests:
         env = {"logic": logic, "t": logic.AlertTracker()}
         count = 0
-        for actual, expected in re.findall(r"Test\.assertEqual\((.+?), ([\w.]+)\);", body):
+        for actual, expected in re.findall(r"Test\.assertEqual\((.+?), ([\w.\"\' ]+)\);", body):
             count += 1
             got = eval(to_python(actual), env)
             want = eval(to_python(expected), env)

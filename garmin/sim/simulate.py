@@ -24,7 +24,8 @@ def load_constants():
     text = LOGIC_SRC.read_text()
     consts = {k: int(v, 0) for k, v in re.findall(r"const (\w+) = (0x[0-9A-Fa-f]+|\d+);", text)}
     for name in ["STRESS_THRESHOLD", "LEVEL2_THRESHOLD", "LEVEL3_THRESHOLD", "HYSTERESIS",
-                 "COLOR_CALM", "COLOR_STRESSED", "COLOR_UNKNOWN"]:
+                 "REST_MAX", "LOW_MAX", "MEDIUM_MAX",
+                 "COLOR_REST", "COLOR_LOW", "COLOR_MEDIUM", "COLOR_HIGH", "COLOR_UNKNOWN"]:
         if name not in consts:
             sys.exit(f"{name} not found in {LOGIC_SRC}")
     return consts
@@ -54,13 +55,31 @@ def alert_level(s):
 def background_color(s):
     if not is_valid(s):
         return C["COLOR_UNKNOWN"]
-    return C["COLOR_STRESSED"] if is_stressed(s) else C["COLOR_CALM"]
+    if s <= C["REST_MAX"]:
+        return C["COLOR_REST"]
+    if s <= C["LOW_MAX"]:
+        return C["COLOR_LOW"]
+    if s <= C["MEDIUM_MAX"]:
+        return C["COLOR_MEDIUM"]
+    return C["COLOR_HIGH"]
+
+
+def text_color(s):
+    if not is_valid(s):
+        return 0xAAAAAA
+    return 0x000000 if background_color(s) == C["COLOR_LOW"] else 0xFFFFFF
 
 
 def status_text(s):
     if not is_valid(s):
         return "NO DATA"
-    return "STRESSED" if is_stressed(s) else "CALM"
+    if s <= C["REST_MAX"]:
+        return "REST"
+    if s <= C["LOW_MAX"]:
+        return "LOW"
+    if s <= C["MEDIUM_MAX"]:
+        return "MEDIUM"
+    return "HIGH"
 
 
 class AlertTracker:
@@ -82,14 +101,16 @@ class AlertTracker:
 
 # (stress reading, expected beeps, expected colour name)
 SCENARIO = [
-    (20, 0, "blue"), (35, 0, "blue"), (55, 0, "blue"), (59, 0, "blue"),
-    (60, 1, "red"), (66, 0, "red"), (58, 0, "blue"), (61, 0, "red"),   # wobble near 60: no repeat
-    (76, 2, "red"), (82, 0, "red"), (91, 3, "red"), (100, 0, "red"),
-    (None, 0, "black"),                                                # no reading (off wrist)
-    (70, 0, "red"), (45, 0, "blue"), (30, 0, "blue"),
-    (64, 1, "red"), (95, 3, "red"),                                    # jump straight to band 3
+    (10, 0, "rest"), (25, 0, "rest"), (26, 0, "low"), (50, 0, "low"),
+    (51, 0, "medium"), (60, 1, "medium"), (66, 0, "medium"),
+    (58, 0, "medium"), (61, 0, "medium"),                               # wobble near 60: no repeat
+    (76, 2, "high"), (82, 0, "high"), (91, 3, "high"), (100, 0, "high"),
+    (None, 0, "none"),                                                  # no reading (off wrist)
+    (70, 0, "medium"), (45, 0, "low"), (20, 0, "rest"),
+    (64, 1, "medium"), (95, 3, "high"),                                 # jump straight to band 3
 ]
-COLOUR_NAMES = {C["COLOR_CALM"]: "blue", C["COLOR_STRESSED"]: "red", C["COLOR_UNKNOWN"]: "black"}
+COLOUR_NAMES = {C["COLOR_REST"]: "rest", C["COLOR_LOW"]: "low", C["COLOR_MEDIUM"]: "medium",
+                C["COLOR_HIGH"]: "high", C["COLOR_UNKNOWN"]: "none"}
 
 
 def hex_rgb(v):
@@ -107,7 +128,7 @@ def font(size, bold=False):
 def render(stress, beeps, clock, size=260):
     """Rough picture of the Forerunner 945 face (260x260 round screen)."""
     bg = background_color(stress)
-    fg = (255, 255, 255) if is_valid(stress) else (170, 170, 170)
+    fg = hex_rgb(text_color(stress))
     im = Image.new("RGB", (size, size), (40, 40, 40))
     mask = Image.new("L", (size, size), 0)
     ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
@@ -121,7 +142,7 @@ def render(stress, beeps, clock, size=260):
     d.text((cx, size * 0.62), f"STRESS {value}", fill=fg, font=font(24, True), anchor="mt")
     d.text((cx, size * 0.76), status_text(stress), fill=fg, font=font(16), anchor="mt")
     if beeps:
-        d.text((cx, size * 0.86), "BEEP + BUZZ x" + str(beeps), fill=(255, 255, 0), font=font(14, True), anchor="mt")
+        d.text((cx, size * 0.86), "BEEP + BUZZ x" + str(beeps), fill=fg, font=font(14, True), anchor="mt")
     return im
 
 
@@ -133,18 +154,18 @@ def main():
     print(f"Thresholds from {LOGIC_SRC.name}: stressed >= {C['STRESS_THRESHOLD']}, "
           f"2 beeps >= {C['LEVEL2_THRESHOLD']}, 3 beeps >= {C['LEVEL3_THRESHOLD']}, "
           f"hysteresis {C['HYSTERESIS']}\n")
-    print(f"{'step':>4}  {'stress':>6}  {'face':<6} {'status':<9} beeps")
+    print(f"{'step':>4}  {'stress':>6}  {'colour':<7} {'status':<8} beeps")
     for i, (stress, want_beeps, want_colour) in enumerate(SCENARIO):
         beeps = tracker.update(stress)
         colour = COLOUR_NAMES[background_color(stress)]
         ok = beeps == want_beeps and colour == want_colour
         if not ok:
             failures.append((i, stress, beeps, want_beeps, colour, want_colour))
-        print(f"{i:>4}  {str(stress):>6}  {colour:<6} {status_text(stress):<9} "
+        print(f"{i:>4}  {str(stress):>6}  {colour:<7} {status_text(stress):<8} "
               f"{'*' * beeps or '-':<3} {'OK' if ok else 'FAIL'}")
         frames.append(render(stress, beeps, f"10:{i:02d}"))
 
-    cols = 6
+    cols = 5
     tile = frames[0].width
     rows = (len(frames) + cols - 1) // cols
     sheet = Image.new("RGB", (cols * (tile + 10) + 10, rows * (tile + 10) + 10), (20, 20, 20))
