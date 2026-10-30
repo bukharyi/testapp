@@ -42,6 +42,29 @@ Tip: for an alert while the watch face is showing, also turn on Garmin's own
 
 Both apps share `shared/` (the logic, the drawing and the unit tests).
 
+## Stress Live (Android phone app)
+
+`android/` is an Android app that shows your stress live on your phone, in the same colours,
+with how many seconds ago the reading arrived:
+
+```
+watch: Stress Alert app ──Bluetooth──▶ Garmin Connect app ──▶ Stress Live app
+```
+
+- The **Stress Alert** watch app sends every new reading, plus a check-in every 10 seconds. So the
+  phone is live **only while Stress Alert is open on the watch**. Garmin does not let watch faces
+  talk to the phone, so the watch face can't feed it. Demo mode on the watch (START) is sent
+  too and shows `DEMO` on the phone, which is an easy end-to-end test.
+- A reading older than 30 seconds is shown as out of date (black circle).
+- It needs the **Garmin Connect** app installed and paired with the watch.
+
+**Install:** open `garmin/android/` in [Android Studio](https://developer.android.com/studio). On
+your phone, turn on *Developer options → USB debugging*, plug it in and press **Run**. Or use
+*Build → Build APK* and copy the APK to the phone. Rebuild and reinstall `StressAlert.prg` on the
+watch as well: it now needs the Communications permission.
+
+**Tests:** in Android Studio run `app/src/test/.../StressLevelTest`, or `./gradlew test`.
+
 ## Supported watches
 
 `fr945`, `fr945lte`, `fr955`, `fr965`, `fr970`. There is no "Forerunner 975". If your watch is

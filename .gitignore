@@ -37,3 +37,7 @@ garmin/**/*.iq
 garmin/*.der
 garmin/*.pem
 garmin/sim/__pycache__/
+garmin/android/.gradle/
+garmin/android/build/
+garmin/android/app/build/
+garmin/android/local.properties

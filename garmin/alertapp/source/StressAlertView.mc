@@ -5,6 +5,7 @@ import Toybox.WatchUi;
 
 // Same face as the watch face, plus 1/2/3 beeps and vibrations when stress climbs.
 // Press START to run a demo that ramps stress up and down.
+// Every reading is also sent to the Stress Live phone app.
 class StressAlertView extends WatchUi.View {
 
     // Demo ramp: calm -> each alert band -> back to calm. One step every DEMO_STEP_MS.
@@ -18,11 +19,13 @@ class StressAlertView extends WatchUi.View {
     private var _demoIndex as Number = 0;
     private var _demoElapsed as Number = 0;
     private var _stress as Number? = null;
+    private var _phone as PhoneLink;
 
     function initialize() {
         View.initialize();
         _timer = new Timer.Timer();
         _tracker = new StressLogic.AlertTracker();
+        _phone = new PhoneLink();
     }
 
     function onShow() as Void {
@@ -49,6 +52,7 @@ class StressAlertView extends WatchUi.View {
         if (beeps > 0) {
             StressAlerter.alert(beeps);
         }
+        _phone.send(_stress, _demo);
         WatchUi.requestUpdate();
     }
 
