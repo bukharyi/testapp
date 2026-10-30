@@ -29,3 +29,11 @@ node_modules
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+
+# Garmin
+garmin/**/bin/
+garmin/**/*.prg
+garmin/**/*.iq
+garmin/*.der
+garmin/*.pem
+garmin/sim/__pycache__/
